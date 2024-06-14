@@ -1,19 +1,16 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
-import crud
-import models
-import database
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-app = FastAPI()
-DATABASE_URL = "mysql+pymysql://root:password@localhost:3306/Wordgame"
+DATABASE_URL = "mysql+pymysql://root:password@localhost:3306/shopping"
 
-@app.get("/word")
-async def read_random_word(db: Session = Depends(database.get_db)):
-    word = crud.get_random_word(db)
-    return {"word": word.word, "rating": word.rating}
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@app.post("/guess")
-async def evaluate_guess(guess: str, db: Session = Depends(database.get_db)):
-    word = crud.get_random_word(db)
-    result = crud.check_guess(word.word, guess)
-    return {"correct_letters": result.correct_letters, "correct_positions": result.correct_positions}
+Base = declarative_base()
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
